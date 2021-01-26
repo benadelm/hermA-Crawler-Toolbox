@@ -6,11 +6,13 @@ The software has been tested with Windows 10 and Linux. Being written in Java, 
 
 # Running
 
-Every tool has a corresponding main class that can be run the usual way, for example:
+You should be familiar with running Java programs from the command line.
+
+Every tool has a corresponding main class to be specified in order to run the tool, for example:
 
 	java herma.crawler.toolbox.MetadataConsistencyCheck <arguments...>
 
-for the Metadata Consistency Check (see below). Depending on the current directory or when using a `.jar` bundle, you may have to specify a class path, for example:
+for the Metadata Consistency Check (see below). Depending on the current directory or when using a `.jar` bundle, you may have to specify a [class path](https://en.wikipedia.org/wiki/Classpath), for example:
 
 	java -cp some/directory herma.crawler.toolbox.MetadataConsistencyCheck <arguments...>
 
@@ -21,6 +23,18 @@ where `some/directory/herma/crawler/toolbox/MetadataConsistencyCheck.class` is t
 for invoking the main class from the `.jar` file `hermA-Crawler-Toolbox.jar`.
 
 # The Tools
+
+The tools deal with the metadata files `urls.txt`, `files.txt` and `matches.txt` in the crawler output directory as well as files in its `original` sub-directory and the sub-directories of `txt` (`01_Originale`, `02_Tokenisierung`, `03_POS_Lemma`, `03a_ParserInput`, `04_Parse`):
+
+	urls.txt
+	files.txt
+	matches.txt
+	original/...
+	txt/01_Originale/...
+	txt/02_Tokenisierung/...
+	txt/03_POS_Lemma/...
+	txt/03a_ParserInput/...
+	txt/04_Parse/...
 
 ## Metadata Consistency Check
 
@@ -66,7 +80,7 @@ Arguments:
 
 1. the path to the crawler output directory
 2. a file with the names of files to delete
-3. the column (in `files.txt`) where to look for the file names; possible values:
+3. the column (in `files.txt`) in which to look for the file names; possible values:
    * `original` for files in the `original` directory (first column of `files.txt`)
    * `01_Originale` for files in the `01_Originale` sub-directory of `txt` (third column of `files.txt`)
    * `02_Tokenisierung` for files in the `02_Tokenisierung` sub-directory of `txt` (fourth column of `files.txt`)
@@ -103,7 +117,7 @@ Arguments:
 1. the path to the crawler output directory
 2. the path to a file where to write the output
 
-Although the web crawler does not request the same URL more than once, it may still happen to download the same web page more than one time. For example, web servers may send the same data for different URLs. This tool identifies files in the crawler output where text extraction resulted in exactly the same token sequence (as stored in the files in the `02_Tokenisierung` sub-directory of `txt`). Sentence boundaries are ignored.
+Although the web crawler does not request the same URL more than once, it may still happen to download the same web page more than one time. For example, web servers may send the same data for different URLs. This tool identifies files in the crawler output where text extraction resulted in exactly the same token sequence (as stored in the files in the `02_Tokenisierung` sub-directory of `txt`). Sentence boundaries are ignored, so files are considered equivalent if they are tokenized to the same tokens in the same order, even if these token sequences are split differently into sentences.
 
 The output is a UTF-8 plain text file with every line corresponding to one token sequence shared by at least two files in `02_Tokenisierung`. The lines consist of the names of these files, separated by tabulator characters. For example:
 
@@ -112,7 +126,7 @@ The output is a UTF-8 plain text file with every line corresponding to one token
 
 In this example, the three files `mycrawl_bvitg_005361_d.txt`, `mycrawl_bvitg_005391_d.txt` and `mycrawl_ztg-nrw_000472_d.txt` share the same token sequence, and the two files `mycrawl_bkk-extraplus_000193_a.txt` and `mycrawl_extra-plus_000306_a.txt` share another token sequence.
 
-The tool works by building a hash table of token sequences in memory, so you may want to increase Java’s heap memory budget (`-Xmx` option).
+The tool works by building a hash table of token sequences in memory, so you may want to increase Java’s heap memory budget (`-Xmx` option, see [Java options](https://docs.oracle.com/javase/7/docs/technotes/tools/windows/java.html)).
 
 ## Visited Hosts Statistics (‘<span lang="de">Umtriebe</span>’)
 
@@ -165,6 +179,25 @@ Both output files are UTF-8 plain text files. Every line consists of two fields 
 In the match statistics file, the count in the first field of a line specifies how often exactly the contents of the second field of that line appeared as a match string in `matches.txt`. ‘Exactly’ means in particular that this is case-sensitive.
 
 In the keyphrase statistics file, the count the first field of a line specifies how many match strings from `matches.txt` matched the keyphrase in the second field. However, the matching logic used here is *not* fully equivalent to the logic used in the web crawler itself: A match string and a keyphrase match if (and only if) they have the same number of words and every word of the keyphrase appears as a substring (ignoring case) of the corresponding word in the match string. Unlike in the web crawler, no lemmatization of the match string is performed. Also note that one keyphrase may match more than one match string.
+
+A match statistics file could look like this:
+
+	617	Telematikinfrastruktur
+	373	gematik
+	259	Telemedizin
+	243	Telematik
+	...
+
+So `Telematikinfrastruktur` appears 617 times as a match string in `matches.txt`, `gematik` 373 times and so on.
+
+A keyphrase statistics file could look like this:
+
+	1201	Telematik
+	851	Telemedizin
+	444	gematik
+	434	E-Health
+
+So 1201 entries from `matches.txt` have a match string matching `Telematik` (this includes the above occurrences of `Telematikinfrastruktur`), 851 entries have a match string matching `Telemedizin`, and so on.
 
 ## Merging
 
